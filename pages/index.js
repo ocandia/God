@@ -285,7 +285,7 @@ export default function Page() {
 
     try {
       console.log("Sending message to backend:", messageToSendBackend);
-      const response = await fetch("http://127.0.0.1:8000/chat", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -370,7 +370,7 @@ export default function Page() {
     try {
       const credentials = { email: "user123@example.com", password: "password123" };
       console.log("Sending login request with:", credentials);
-      const res = await fetch("http://127.0.0.1:8000/token", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -419,7 +419,7 @@ export default function Page() {
     const prayerPrompt = `Provide a short prayer (3-5 sentences) relevant to the current discussion: "${recentMessages}". Incorporate any names and specifics mentioned by the user, using wisdom from the provided religious texts.`;
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/chat", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
