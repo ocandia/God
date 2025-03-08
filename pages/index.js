@@ -5,7 +5,7 @@ import godLogo from "/public/God.png";
 import userIcon from "/public/user.png";
 import godIcon from "/public/god_icon.png";
 import { useEffect, useState, useRef, useCallback } from "react";
-import controversialQuestions from "../lib/controversialQuestions"; // Import the questions
+import controversialQuestions from "../lib/controversialQuestions";
 
 export default function Page() {
   const [messages, setMessages] = useState([]);
@@ -17,10 +17,13 @@ export default function Page() {
   const [chatDate, setChatDate] = useState("");
   const [mounted, setMounted] = useState(false);
   const [authConfirmation, setAuthConfirmation] = useState("");
-  const [isDarkMode] = useState(true); // Fixed to dark mode, no toggle
+  const [isDarkMode] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState("");
+  const [showLoginPopup, setShowLoginPopup] = useState(false); // New state for popup
+  const [loginEmail, setLoginEmail] = useState(""); // Email input
+  const [loginPassword, setLoginPassword] = useState(""); // Password input
 
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -167,7 +170,7 @@ export default function Page() {
   }, [mounted]);
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--pulse-color', '#fef08a'); // Fixed for dark mode
+    document.documentElement.style.setProperty('--pulse-color', '#fef08a');
     document.documentElement.style.setProperty('--star-color', '#fef08a');
     document.documentElement.style.setProperty('--dot-color', '#fef08a');
     document.documentElement.style.setProperty('--cloud-opacity', '0.2');
@@ -273,10 +276,6 @@ export default function Page() {
     });
 
     console.log("Token being sent:", token);
-    console.log("Request headers:", {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    });
     if (!token) {
       setError("⚠️ You need to log in first.");
       setLoading(false);
@@ -317,7 +316,6 @@ export default function Page() {
           if (messageSound.current) {
             messageSound.current.play().catch((err) => console.error("Message sound error:", err));
           }
-          console.log("Streaming complete, final response:", botResponse, "Audio URL:", audioUrl);
           break;
         }
 
@@ -357,7 +355,6 @@ export default function Page() {
       console.error("SendMessage Error:", err);
       setError("⚠️ Failed to get a response from chatbot: " + err.message);
     } finally {
-      console.log("Resetting loading state");
       setLoading(false);
       setInput("");
       if (inputRef.current) {
@@ -366,9 +363,10 @@ export default function Page() {
     }
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault(); // Prevent form submission refresh
     try {
-      const credentials = { email: "user123@example.com", password: "password123" };
+      const credentials = { email: loginEmail, password: loginPassword };
       console.log("Sending login request with:", credentials);
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/token`, {
         method: "POST",
@@ -378,7 +376,7 @@ export default function Page() {
       const data = await res.json();
       console.log("Login response:", data);
       if (!res.ok) {
-        throw new Error("Login failed");
+        throw new Error(data.detail || "Login failed");
       }
       if (data.access_token) {
         console.log("Setting token:", data.access_token);
@@ -387,6 +385,9 @@ export default function Page() {
         document.title = "God: Online";
         setError("");
         setAuthConfirmation("✅ You have logged on");
+        setShowLoginPopup(false); // Close popup
+        setLoginEmail(""); // Clear inputs
+        setLoginPassword("");
 
         const introMessage = "Greetings, seeker of truth. I’m here to guide you with God’s wisdom, drawn from His sacred words.";
         setMessages([{ text: introMessage, sender: "bot", hasCursor: false, audioUrl: null, sources: [] }]);
@@ -396,7 +397,7 @@ export default function Page() {
       }
     } catch (err) {
       console.error("Login Error:", err);
-      setError("⚠️ Login failed. Check credentials.");
+      setError("⚠️ Login failed: " + err.message);
     }
   };
 
@@ -688,27 +689,7 @@ export default function Page() {
         <div className="star" style={{ fontSize: "7px" }}>•</div>
         <div className="star" style={{ fontSize: "6px" }}>•</div>
         <div className="star" style={{ fontSize: "4px" }}>•</div>
-        <div className="star" style={{ fontSize: "8px" }}>•</div>
-        <div className="star" style={{ fontSize: "5px" }}>•</div>
-        <div className="star" style={{ fontSize: "7px" }}>•</div>
-        <div className="star" style={{ fontSize: "6px" }}>•</div>
-        <div className="star" style={{ fontSize: "4px" }}>•</div>
-        <div className="star" style={{ fontSize: "8px" }}>•</div>
-        <div className="star" style={{ fontSize: "5px" }}>•</div>
-        <div className="star" style={{ fontSize: "7px" }}>•</div>
-        <div className="star" style={{ fontSize: "6px" }}>•</div>
-        <div className="star" style={{ fontSize: "4px" }}>•</div>
-        <div className="star" style={{ fontSize: "8px" }}>•</div>
-        <div className="star" style={{ fontSize: "5px" }}>•</div>
-        <div className="star" style={{ fontSize: "7px" }}>•</div>
-        <div className="star" style={{ fontSize: "6px" }}>•</div>
-        <div className="star" style={{ fontSize: "4px" }}>•</div>
-        <div className="star" style={{ fontSize: "8px" }}>•</div>
-        <div className="star" style={{ fontSize: "5px" }}>•</div>
-        <div className="star" style={{ fontSize: "7px" }}>•</div>
-        <div className="star" style={{ fontSize: "6px" }}>•</div>
-        <div className="star" style={{ fontSize: "4px" }}>•</div>
-        <div className="star" style={{ fontSize: "8px" }}>•</div>
+        <div className="star" style={{ fontSize: "Jonah Goldberg8px" }}>•</div>
         <div className="star" style={{ fontSize: "5px" }}>•</div>
         <div className="star" style={{ fontSize: "7px" }}>•</div>
         <div className="shooting-star" style={{ animationName: "shooting-star" }}></div>
@@ -789,7 +770,7 @@ export default function Page() {
             </button>
           ) : (
             <button
-              onClick={handleLogin}
+              onClick={() => setShowLoginPopup(true)} // Show popup instead of direct login
               className="px-2 py-1 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600"
             >
               In
@@ -804,6 +785,52 @@ export default function Page() {
           </button>
         </div>
       </div>
+
+      {/* Login Popup */}
+      {showLoginPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm text-gray-900">
+            <h2 className="text-xl font-bold mb-4">Login</h2>
+            <form onSubmit={handleLogin}>
+              <div className="mb-4">
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="Email"
+                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPopup(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                >
+                  Login
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {error && <p className="text-red-500 mb-2 z-10">{error}</p>}
       {authConfirmation && <p className="text-green-500 mb-2 animate-fade-out z-10">{authConfirmation}</p>}
