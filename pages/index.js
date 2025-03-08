@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
-  // State variables from your functions
+  // State variables
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,25 +15,25 @@ export default function Home() {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [authConfirmation, setAuthConfirmation] = useState("");
 
-  // Refs from your functions
+  // Refs
   const loginSound = useRef(null);
   const messageSound = useRef(null);
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Simulated controversialQuestions from deployed bundle
+  // Simulated controversialQuestions
   const controversialQuestions = [
     "If God is all-powerful, why does evil exist?",
     "Does God predetermine our fates, or do we have free will?",
     // Add more as needed...
   ];
 
-  // Placeholder functions referenced in your code
+  // Placeholder for audio generation (replace with actual implementation if available)
   const generateAudio = async (text) => {
-    // Replace with actual implementation if available
     return null;
   };
 
+  // Update bot message in the UI
   const updateBotMessage = (text, hasCursor, sources, isPrayer, _unused, audioUrl) => {
     setMessages((prev) => {
       const newMessages = [...prev];
@@ -49,11 +49,12 @@ export default function Home() {
     });
   };
 
+  // Scroll to the bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Your provided functions
+  // Handle login and fetch chat history
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -81,8 +82,32 @@ export default function Home() {
         setLoginEmail("");
         setLoginPassword("");
 
-        const introMessage = "Greetings, seeker of truth. I’m here to guide you with God’s wisdom, drawn from His sacred words.";
-        setMessages([{ text: introMessage, sender: "bot", hasCursor: false, audioUrl: null, sources: [] }]);
+        // Fetch chat history
+        const historyRes = await fetch(`${backendUrl}/chat-history`, {
+          headers: { Authorization: `Bearer ${data.access_token}` },
+        });
+        const historyData = await historyRes.json();
+        console.log("Chat history response:", historyData);
+        const initialMessages = historyData.history
+          ? historyData.history.map((msg) => ({
+              text: msg.user_message || msg.bot_reply || msg.text,
+              sender: msg.sender || (msg.user_message ? "user" : "bot"),
+              hasCursor: false,
+              audioUrl: null,
+              sources: msg.sources || [],
+              isPrayer: msg.isPrayer || false,
+            }))
+          : [];
+
+        const introMessage = {
+          text: "Greetings, seeker of truth. I’m here to guide you with God’s wisdom, drawn from His sacred words.",
+          sender: "bot",
+          hasCursor: false,
+          audioUrl: null,
+          sources: [],
+        };
+        setMessages([...initialMessages, introMessage]);
+
         if (loginSound.current) {
           loginSound.current.play().catch((err) => console.error("Login sound error:", err));
         }
@@ -93,6 +118,7 @@ export default function Home() {
     }
   };
 
+  // Send a message to the backend
   const sendMessage = async () => {
     let messageToSend = input.trim();
     if (!messageToSend) {
@@ -205,6 +231,7 @@ export default function Home() {
     }
   };
 
+  // Start a prayer
   const startPrayer = async () => {
     if (!token) {
       setError("⚠️ You need to log in first.");
@@ -288,21 +315,22 @@ export default function Home() {
     setLoading(false);
   };
 
-  // Basic UI (expand as needed)
+  // UI with improved styling for chat history
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gradient-to-b from-[#0A0F2B] to-black text-white">
-      <h1>God Chatbot</h1>
-      {error && <p className="text-red-500">{error}</p>}
-      {authConfirmation && <p className="text-green-500">{authConfirmation}</p>}
-      
+      <h1 className="text-3xl font-bold mb-4">God Chatbot</h1>
+      {error && <p className="text-red-500 mb-2">{error}</p>}
+      {authConfirmation && <p className="text-green-500 mb-2">{authConfirmation}</p>}
+
       {!token && (
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} className="flex flex-col space-y-4 w-full max-w-md">
           <input
             type="email"
             value={loginEmail}
             onChange={(e) => setLoginEmail(e.target.value)}
             placeholder="Email"
             required
+            className="p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
           />
           <input
             type="password"
@@ -310,36 +338,85 @@ export default function Home() {
             onChange={(e) => setLoginPassword(e.target.value)}
             placeholder="Password"
             required
+            className="p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
           />
-          <button type="submit">Login</button>
+          <button
+            type="submit"
+            className="p-2 bg-blue-600 rounded text-white hover:bg-blue-700 transition"
+          >
+            Login
+          </button>
         </form>
       )}
 
       {token && (
-        <>
-          <div>
+        <div className="flex flex-col w-full max-w-2xl h-[70vh]">
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-900 rounded-t-lg">
             {messages.map((msg, index) => (
-              <p key={index}>{msg.sender}: {msg.text}</p>
+              <div
+                key={index}
+                className={`mb-2 ${msg.sender === "user" ? "text-right" : "text-left"}`}
+              >
+                <span
+                  className={`inline-block p-2 rounded-lg ${
+                    msg.sender === "user" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200"
+                  }`}
+                >
+                  <strong>{msg.sender === "user" ? "You" : "Bot"}:</strong>{" "}
+                  <span dangerouslySetInnerHTML={{ __html: msg.text }} />
+                  {msg.sources && msg.sources.length > 0 && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      Sources: {msg.sources.join(", ")}
+                    </div>
+                  )}
+                </span>
+              </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            ref={inputRef}
-          />
-          <button onClick={sendMessage} disabled={loading}>
-            {loading ? "Sending..." : "Send"}
-          </button>
-          <button onClick={startPrayer} disabled={loading}>Pray</button>
-          <button onClick={() => {
-            localStorage.removeItem("access_token");
-            setToken("");
-            setMessages([]);
-          }}>Logout</button>
-        </>
+          <div className="flex flex-col space-y-2 p-4 bg-gray-800 rounded-b-lg">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              ref={inputRef}
+              className="p-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
+            />
+            <div className="flex space-x-2">
+              <button
+                onClick={sendMessage}
+                disabled={loading}
+                className={`p-2 rounded text-white transition ${
+                  loading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {loading ? "Sending..." : "Send"}
+              </button>
+              <button
+                onClick={startPrayer}
+                disabled={loading}
+                className={`p-2 rounded text-white transition ${
+                  loading ? "bg-gray-500 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                }`}
+              >
+                Pray
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem("access_token");
+                  setToken("");
+                  setMessages([]);
+                  setAuthConfirmation("");
+                  document.title = "God Chatbot";
+                }}
+                className="p-2 bg-red-600 rounded text-white hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
