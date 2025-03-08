@@ -75,13 +75,14 @@ export default function Home() {
         console.log("Setting token:", data.access_token);
         localStorage.setItem("access_token", data.access_token);
         setToken(data.access_token);
+        console.log("Token state after set:", token); // This might log the old state due to async
         document.title = "God: Online";
         setError("");
         setAuthConfirmation("✅ You have logged on");
         setShowLoginPopup(false);
         setLoginEmail("");
         setLoginPassword("");
-
+  
         // Fetch chat history
         const historyRes = await fetch(`${backendUrl}/chat-history`, {
           headers: { Authorization: `Bearer ${data.access_token}` },
@@ -98,19 +99,23 @@ export default function Home() {
               isPrayer: msg.isPrayer || false,
             }))
           : [];
-
+  
         const introMessage = {
-          text: "Greetings, seeker of truth. I’m here to guide you with God’s wisdom, drawn from His sacred words.",
+          text: "Welcome, I am carefully augmented to provide you wisdom, knowledge and scared truth. I am here 24 hours a day, every day to discuss your personal journey and align it with God’s wisdom, drawn from His sacred words.",
           sender: "bot",
           hasCursor: false,
           audioUrl: null,
           sources: [],
         };
         setMessages([...initialMessages, introMessage]);
-
+        console.log("Messages after login:", [...initialMessages, introMessage]);
+  
         if (loginSound.current) {
           loginSound.current.play().catch((err) => console.error("Login sound error:", err));
         }
+      } else {
+        console.error("No access_token in response:", data);
+        setError("⚠️ Login failed: No access token received");
       }
     } catch (err) {
       console.error("Login Error:", err);
