@@ -1,7 +1,7 @@
 // Force redeploy with backend URL fallback - March 08, 2025
 "use client"; // Required for client-side logic in Next.js App Router or legacy pages with client features
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
   // State variables
@@ -60,7 +60,7 @@ export default function Home() {
     try {
       const credentials = { email: loginEmail, password: loginPassword };
       console.log("Sending login request with:", credentials);
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://chat-backend-161d.onrender.com';
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://chat-backend-161d.onrender.com";
       const res = await fetch(`${backendUrl}/token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +82,7 @@ export default function Home() {
         setShowLoginPopup(false);
         setLoginEmail("");
         setLoginPassword("");
-  
+
         // Fetch chat history
         const historyRes = await fetch(`${backendUrl}/chat-history`, {
           headers: { Authorization: `Bearer ${data.access_token}` },
@@ -99,9 +99,9 @@ export default function Home() {
               isPrayer: msg.isPrayer || false,
             }))
           : [];
-  
+
         const introMessage = {
-          text: "Welcome, I am carefully augmented to provide you wisdom, knowledge and scared truth. I am here 24 hours a day, every day to discuss your personal journey and align it with God’s wisdom, drawn from His sacred words.",
+          text: "Welcome, I am carefully augmented to provide you wisdom, knowledge and sacred truth. I am here 24 hours a day, every day to discuss your personal journey and align it with God’s wisdom, drawn from His sacred words.",
           sender: "bot",
           hasCursor: false,
           audioUrl: null,
@@ -109,7 +109,7 @@ export default function Home() {
         };
         setMessages([...initialMessages, introMessage]);
         console.log("Messages after login:", [...initialMessages, introMessage]);
-  
+
         if (loginSound.current) {
           loginSound.current.play().catch((err) => console.error("Login sound error:", err));
         }
@@ -156,7 +156,7 @@ export default function Home() {
 
     try {
       console.log("Sending message to backend:", messageToSendBackend);
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://chat-backend-161d.onrender.com';
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://chat-backend-161d.onrender.com";
       const response = await fetch(`${backendUrl}/chat`, {
         method: "POST",
         headers: {
@@ -236,7 +236,7 @@ export default function Home() {
     }
   };
 
-  // Start a prayer
+  // Start a prayer using the dedicated /pray endpoint
   const startPrayer = async () => {
     if (!token) {
       setError("⚠️ You need to log in first.");
@@ -244,18 +244,17 @@ export default function Home() {
     }
 
     setLoading(true);
-    const recentMessages = messages.filter((msg) => msg.sender === "user").slice(-5).map((msg) => msg.text).join("; ");
-    const prayerPrompt = `Provide a short prayer (3-5 sentences) relevant to the current discussion: "${recentMessages}". Incorporate any names and specifics mentioned by the user, using wisdom from the provided religious texts.`;
+    const userMessage = { text: "Pray request", sender: "user", hasCursor: false, audioUrl: null };
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://chat-backend-161d.onrender.com';
-      const response = await fetch(`${backendUrl}/chat`, {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://chat-backend-161d.onrender.com";
+      const response = await fetch(`${backendUrl}/pray`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: prayerPrompt }),
       });
 
       if (!response.ok) {
@@ -365,7 +364,7 @@ export default function Home() {
                 <span
                   className={`inline-block p-2 rounded-lg ${
                     msg.sender === "user" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200"
-                  }`}
+                  } ${msg.isPrayer ? "border-l-4 border-blue-900" : ""}`}
                 >
                   <strong>{msg.sender === "user" ? "You" : "Bot"}:</strong>{" "}
                   <span dangerouslySetInnerHTML={{ __html: msg.text }} />
