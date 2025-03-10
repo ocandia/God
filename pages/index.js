@@ -37,29 +37,31 @@ export default function Page() {
   const hasMounted = useRef(false);
   const recognitionRef = useRef(null);
 
-  // On mount, check for token and "justLoggedIn" flag
+  // On mount: load token from localStorage and set chat date.
   useEffect(() => {
     const storedToken = localStorage.getItem("access_token");
     if (storedToken) {
-      setToken(storedToken);
+      setToken(storedToken.trim());
       document.title = "God: Online";
     } else {
       document.title = "God: Available";
     }
     setChatDate(new Date().toLocaleString());
-
-    // Check if user just logged in and remove the flag afterward.
-    if (localStorage.getItem("justLoggedIn")) {
-      setAuthConfirmation("✅ You have logged on");
-      localStorage.removeItem("justLoggedIn");
-      sendWelcomeMessage(); // Generate welcome message from chatbot
-    } else {
-      // Otherwise, set a default welcome message (or empty)
-      setMessages([]);
-    }
     setMounted(true);
     console.log("Initial mount complete.");
   }, [router]);
+
+  // If the user has just logged in, generate welcome message—but only once token is valid.
+  useEffect(() => {
+    if (token && localStorage.getItem("justLoggedIn")) {
+      setAuthConfirmation("✅ You have logged on");
+      localStorage.removeItem("justLoggedIn");
+      sendWelcomeMessage();
+    } else if (!token) {
+      // Optionally set default welcome message here if needed.
+      setMessages([]);
+    }
+  }, [token]);
 
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
@@ -137,10 +139,11 @@ export default function Page() {
     [scrollToBottom]
   );
 
-  // Function to generate a welcome message from the chatbot after login
+  // Function to generate a welcome message from the chatbot after login.
   const sendWelcomeMessage = async () => {
-    // Before proceeding, ensure that the token is valid
-    if (!token || token.split('.').length !== 3) {
+    // Trim the token and check its format
+    const trimmedToken = token.trim();
+    if (!trimmedToken || trimmedToken.split(".").length !== 3) {
       console.error("Invalid token for welcome message:", token);
       setError("Invalid token for generating welcome message.");
       return;
@@ -155,7 +158,7 @@ export default function Page() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${trimmedToken}`,
         },
         body: JSON.stringify({ message: welcomePrompt }),
       });
@@ -167,7 +170,7 @@ export default function Page() {
       const decoder = new TextDecoder();
       let welcomeResponse = "";
       let welcomeSources = [];
-      // Set an initial "typing" message
+      // Set an initial "typing" message from the bot
       setMessages([{ text: "Typing...", sender: "bot", hasCursor: true, audioUrl: null, sources: [] }]);
       while (true) {
         const { value, done } = await reader.read();
@@ -207,13 +210,13 @@ export default function Page() {
     }
   };
 
-  // (Placeholder functions for sendMessage and startPrayer – use your existing implementations.)
+  // Placeholder functions for sendMessage and startPrayer – insert your stable implementations here.
   const sendMessage = async () => {
-    // ... your existing sendMessage code ...
+    // ... your existing sendMessage logic ...
   };
 
   const startPrayer = async () => {
-    // ... your existing startPrayer code ...
+    // ... your existing startPrayer logic ...
   };
 
   const handleLogout = () => {
@@ -221,7 +224,13 @@ export default function Page() {
     setToken("");
     document.title = "God Chatbot";
     setMessages([
-      { text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] }
+      {
+        text: "You have been logged out.",
+        sender: "bot",
+        hasCursor: false,
+        audioUrl: null,
+        sources: [],
+      },
     ]);
     setAuthConfirmation("✅ You have logged out");
     router.push("/login");
