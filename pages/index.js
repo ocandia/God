@@ -37,7 +37,7 @@ export default function Page() {
   const hasMounted = useRef(false);
   const recognitionRef = useRef(null);
 
-  // On mount: load token from localStorage and set chat date.
+  // On mount: load token and chat date.
   useEffect(() => {
     const storedToken = localStorage.getItem("access_token");
     if (storedToken) {
@@ -51,14 +51,13 @@ export default function Page() {
     console.log("Initial mount complete.");
   }, [router]);
 
-  // If the user has just logged in, generate welcome message—but only once token is valid.
+  // After token is set, if just logged in, generate welcome message.
   useEffect(() => {
     if (token && localStorage.getItem("justLoggedIn")) {
       setAuthConfirmation("✅ You have logged on");
       localStorage.removeItem("justLoggedIn");
       sendWelcomeMessage();
     } else if (!token) {
-      // Optionally set default welcome message here if needed.
       setMessages([]);
     }
   }, [token]);
@@ -92,12 +91,10 @@ export default function Page() {
       `"It was not by accident that the greatest thinkers of all ages were deeply religious souls." - Max Planck`,
       `"If we find the answer to that, it would be the ultimate triumph of human reason—for then we would know the mind of God." - Stephen Hawking`,
     ];
-
     const updateQuote = () => {
       const randomIndex = Math.floor(Math.random() * spiritualQuotes.length);
       setRandomQuote(spiritualQuotes[randomIndex]);
     };
-
     updateQuote();
     const interval = setInterval(updateQuote, 10000);
     return () => clearInterval(interval);
@@ -110,7 +107,7 @@ export default function Page() {
     document.documentElement.style.setProperty('--cloud-opacity', '0.2');
   }, []);
 
-  // Helper to determine backend URL correctly
+  // Helper: determine backend URL.
   const getBackendUrl = () => {
     const rawEnv = process.env.NEXT_PUBLIC_BACKEND_URL;
     return (!rawEnv || rawEnv === "undefined")
@@ -118,7 +115,7 @@ export default function Page() {
       : rawEnv;
   };
 
-  // Function to update the bot message in the UI
+  // Function to update the bot message in the UI.
   const updateBotMessage = useCallback(
     (newResponse, isStreaming, sources = [], isPrayer = false, finalCursor = false, audioUrl = null) => {
       setMessages((prev) => {
@@ -141,14 +138,12 @@ export default function Page() {
 
   // Function to generate a welcome message from the chatbot after login.
   const sendWelcomeMessage = async () => {
-    // Trim the token and check its format
     const trimmedToken = token.trim();
     if (!trimmedToken || trimmedToken.split(".").length !== 3) {
       console.error("Invalid token for welcome message:", token);
       setError("Invalid token for generating welcome message.");
       return;
     }
-
     const welcomePrompt = "Greet me warmly with wisdom from sacred texts.";
     setLoading(true);
     setError("");
@@ -170,7 +165,7 @@ export default function Page() {
       const decoder = new TextDecoder();
       let welcomeResponse = "";
       let welcomeSources = [];
-      // Set an initial "typing" message from the bot
+      // Set an initial "typing" message
       setMessages([{ text: "Typing...", sender: "bot", hasCursor: true, audioUrl: null, sources: [] }]);
       while (true) {
         const { value, done } = await reader.read();
@@ -187,6 +182,8 @@ export default function Page() {
               if (jsonData.text) {
                 welcomeResponse += jsonData.text;
                 updateBotMessage(welcomeResponse, true, welcomeSources, false, false, null);
+                // Increase delay for a slower streaming effect (150ms)
+                await new Promise((resolve) => setTimeout(resolve, 150));
               } else if (jsonData.done) {
                 updateBotMessage(welcomeResponse, false, welcomeSources, false, false, null);
                 break;
@@ -210,13 +207,13 @@ export default function Page() {
     }
   };
 
-  // Placeholder functions for sendMessage and startPrayer – insert your stable implementations here.
+  // (Placeholder functions for sendMessage and startPrayer. Insert your existing implementations.)
   const sendMessage = async () => {
-    // ... your existing sendMessage logic ...
+    // ... your existing sendMessage logic, with delay increased to 150ms if desired ...
   };
 
   const startPrayer = async () => {
-    // ... your existing startPrayer logic ...
+    // ... your existing startPrayer logic, with delay increased to 150ms if desired ...
   };
 
   const handleLogout = () => {
@@ -224,13 +221,7 @@ export default function Page() {
     setToken("");
     document.title = "God Chatbot";
     setMessages([
-      {
-        text: "You have been logged out.",
-        sender: "bot",
-        hasCursor: false,
-        audioUrl: null,
-        sources: [],
-      },
+      { text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] }
     ]);
     setAuthConfirmation("✅ You have logged out");
     router.push("/login");
@@ -315,7 +306,7 @@ export default function Page() {
                 <div className="relative">
                   <div className={`p-2 rounded-2xl glass-effect ${msg.isWelcome ? "text-center bg-opacity-80 bg-gray-800 text-white text-lg" : ""}`} style={{ maxWidth: "100%" }}>
                     <p
-                      className={`font-sans text-sm ${msg.sender === "user" ? "text-yellow-400" : ""}`}
+                      className={`font-sans text-sm break-words ${msg.sender === "user" ? "text-yellow-400" : ""}`}
                       dangerouslySetInnerHTML={{
                         __html: msg.hasCursor
                           ? `${msg.text}<span class="inline-block text-white text-xl ml-1 animate-slowBreathe align-middle">●</span>`
