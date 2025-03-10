@@ -42,6 +42,8 @@ export default function Login() {
       }
       if (data.access_token) {
         localStorage.setItem("access_token", data.access_token);
+        // Set a flag so the main page knows the user just logged in
+        localStorage.setItem("justLoggedIn", "true");
         router.push("/"); // Redirect to main chat UI
       } else {
         throw new Error("No access token received");
@@ -55,10 +57,8 @@ export default function Login() {
     <div className="flex flex-col items-center min-h-screen p-4 bg-gradient-to-b from-[#0A0F2B] to-black text-white relative overflow-hidden">
       {/* Background Decorations */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Static Stars */}
         <div className="star" style={{ top: "10%", left: "15%", fontSize: "6px" }}>•</div>
         <div className="star" style={{ top: "20%", left: "80%", fontSize: "4px" }}>•</div>
-        {/* Shooting Stars */}
         <div className="shooting-star" style={{ top: "30%", left: "40%" }}></div>
         <div className="shooting-star" style={{ top: "50%", left: "60%" }}></div>
       </div>

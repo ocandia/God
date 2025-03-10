@@ -35,28 +35,38 @@ export default function Page() {
 
   const loginSound = useRef(null);
   const messageSound = useRef(null);
+  const hasMounted = useRef(false);
 
   useEffect(() => {
-    // On mount, check if token exists; if not, redirect to login
+    // On mount, check for token and "justLoggedIn" flag
     const storedToken = localStorage.getItem("access_token");
-    if (!storedToken) {
-      router.push("/login");
-    } else {
+    if (storedToken) {
       setToken(storedToken);
       document.title = "God: Online";
+    } else {
+      document.title = "God: Available";
     }
     setChatDate(new Date().toLocaleString());
-    setMessages([
-      {
-        text: `Welcome, seeker of divine wisdom. Ask me anything, and I shall respond with truth from sacred texts.<br/><span class="text-3xl">God</span> <span class="text-red-500 text-sm animate-elegant-blink">online</span>`,
-        sender: "bot",
-        hasCursor: false,
-        audioUrl: null,
-        isWelcome: true,
-      },
-    ]);
+
+    // If the user just logged in, display confirmation instead of default welcome message
+    if (localStorage.getItem("justLoggedIn")) {
+      setAuthConfirmation("✅ You have logged on");
+      localStorage.removeItem("justLoggedIn");
+      setMessages([]);
+    } else {
+      setMessages([
+        {
+          text: `Welcome, seeker of divine wisdom. Ask me anything, and I shall respond with truth from sacred texts.<br/><span class="text-3xl">God</span> <span class="text-red-500 text-sm animate-elegant-blink">online</span>`,
+          sender: "bot",
+          hasCursor: false,
+          audioUrl: null,
+          isWelcome: true,
+        },
+      ]);
+    }
+
     setMounted(true);
-    console.log("Setting initial tab title and welcome message");
+    console.log("Setting initial tab title and message");
   }, [router]);
 
   const scrollToBottom = useCallback(() => {
@@ -114,15 +124,21 @@ export default function Page() {
       : rawEnv;
   };
 
-  // (The functions for generateAudio, toggleAudio, toggleRecording, sendMessage, startPrayer, etc.
-  // are assumed to be similar to your stable code. You can include them here as needed.)
+  // (The functions generateAudio, toggleAudio, toggleRecording, sendMessage, and startPrayer
+  // should be inserted here from your stable code as needed. For brevity, they are omitted.)
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     setToken("");
     document.title = "God Chatbot";
     setMessages([
-      { text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] }
+      {
+        text: "You have been logged out.",
+        sender: "bot",
+        hasCursor: false,
+        audioUrl: null,
+        sources: [],
+      },
     ]);
     setAuthConfirmation("✅ You have logged out");
     router.push("/login");
@@ -132,14 +148,7 @@ export default function Page() {
     if (e.key === "Enter") sendMessage();
   };
 
-  // (For brevity, the implementations of sendMessage and startPrayer are omitted; keep your existing code.)
-  const sendMessage = async () => {
-    // ... your existing sendMessage code ...
-  };
-
-  const startPrayer = async () => {
-    // ... your existing startPrayer code ...
-  };
+  // (Assume sendMessage and startPrayer functions are defined here.)
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gradient-to-b from-[#0A0F2B] to-black text-white relative overflow-hidden">
@@ -215,11 +224,14 @@ export default function Page() {
               <div className={`flex flex-col ${msg.sender === "user" ? "items-end" : msg.isWelcome ? "items-center" : "items-start"} ${msg.sender === "bot" && !msg.isWelcome ? "max-w-[90%]" : msg.sender === "user" ? "max-w-[85%]" : "max-w-md"}`}>
                 <div className="relative">
                   <div className={`p-2 rounded-2xl glass-effect ${msg.isWelcome ? "text-center bg-opacity-80 bg-gray-800 text-white text-lg" : ""}`} style={{ maxWidth: "100%" }}>
-                    <p className={`font-sans text-sm ${msg.sender === "user" ? "text-yellow-400" : ""}`} dangerouslySetInnerHTML={{
-                      __html: msg.hasCursor
-                        ? `${msg.text}<span class="inline-block text-white text-xl ml-1 animate-slowBreathe align-middle">●</span>`
-                        : msg.text,
-                    }} />
+                    <p
+                      className={`font-sans text-sm ${msg.sender === "user" ? "text-yellow-400" : ""}`}
+                      dangerouslySetInnerHTML={{
+                        __html: msg.hasCursor
+                          ? `${msg.text}<span class="inline-block text-white text-xl ml-1 animate-slowBreathe align-middle">●</span>`
+                          : msg.text,
+                      }}
+                    />
                   </div>
                   {msg.sender === "bot" && !msg.hasCursor && msg.audioUrl && !msg.isWelcome && (
                     <button
@@ -235,9 +247,12 @@ export default function Page() {
                   )}
                 </div>
                 {msg.sender === "bot" && msg.sources && msg.sources.length > 0 && !msg.isWelcome && (
-                  <p className="text-[10px] text-gray-400 mt-1" dangerouslySetInnerHTML={{
-                    __html: `<span class="text-yellow-500">Sources (${msg.sources.length}):</span> ${msg.sources.join(' <span class="text-yellow-500">\\</span> ')}`,
-                  }} />
+                  <p
+                    className="text-[10px] text-gray-400 mt-1"
+                    dangerouslySetInnerHTML={{
+                      __html: `<span class="text-yellow-500">Sources (${msg.sources.length}):</span> ${msg.sources.join(' <span class="text-yellow-500">\\</span> ')}`,
+                    }}
+                  />
                 )}
               </div>
             </div>
