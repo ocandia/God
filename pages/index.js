@@ -25,6 +25,10 @@ export default function Page() {
   const [isRecording, setIsRecording] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState("");
+  // State for showing the login overlay
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Refs
   const chatContainerRef = useRef(null);
@@ -36,7 +40,7 @@ export default function Page() {
   const messageSound = useRef(null);
   const recognitionRef = useRef(null);
 
-  // On mount: load token and chat date.
+  // On mount: load token from localStorage and set chat date.
   useEffect(() => {
     const storedToken = localStorage.getItem("access_token");
     if (storedToken) {
@@ -44,20 +48,14 @@ export default function Page() {
       document.title = "God: Online";
     } else {
       document.title = "God: Available";
+      setShowLoginPopup(true);
     }
     setChatDate(new Date().toLocaleString());
     setMounted(true);
     console.log("Initial mount complete.");
-  }, [router]);
+  }, []);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!token) {
-      router.push("/login");
-    }
-  }, [token, router]);
-
-  // After token is set, if just logged in, generate welcome message.
+  // If a token was set and we just logged in, generate a welcome message.
   useEffect(() => {
     if (token && localStorage.getItem("justLoggedIn")) {
       setAuthConfirmation("✅ You have logged on");
@@ -212,13 +210,13 @@ export default function Page() {
     }
   };
 
-  // Placeholder functions for sendMessage and startPrayer – insert your existing implementations.
+  // Placeholder functions for sendMessage and startPrayer.
   const sendMessage = async () => {
-    // ... existing sendMessage logic with adjusted delay if needed ...
+    // ... your existing sendMessage logic (with adjustments for delay if desired) ...
   };
 
   const startPrayer = async () => {
-    // ... existing startPrayer logic with adjusted delay if needed ...
+    // ... your existing startPrayer logic (with adjustments for delay if desired) ...
   };
 
   const handleLogout = () => {
@@ -226,16 +224,11 @@ export default function Page() {
     setToken("");
     document.title = "God Chatbot";
     setMessages([
-      {
-        text: "You have been logged out.",
-        sender: "bot",
-        hasCursor: false,
-        audioUrl: null,
-        sources: [],
-      },
+      { text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] },
     ]);
     setAuthConfirmation("✅ You have logged out");
-    router.push("/login");
+    // Optionally, you could set showLoginPopup to true here to display the login overlay
+    setShowLoginPopup(true);
   };
 
   const handleKeyDown = (e) => {
@@ -293,7 +286,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Chat UI Container */}
+      {/* Main Chat UI */}
       <div className="w-full max-w-lg relative z-10 flex flex-col items-center">
         <div
           ref={chatContainerRef}
@@ -371,6 +364,49 @@ export default function Page() {
           </button>
         </div>
       </div>
+
+      {/* Login Modal Overlay (if no token) */}
+      {showLoginPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-20">
+          <div className="bg-blue-600 p-6 rounded-lg shadow-lg max-w-sm w-full text-white">
+            <h2 className="text-xl font-bold mb-4 text-center">Login</h2>
+            <form onSubmit={handleLogin} className="flex flex-col space-y-4">
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="Email"
+                required
+                className="w-full p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Password"
+                required
+                className="w-full p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPopup(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                >
+                  Login
+                </button>
+              </div>
+              {error && <p className="mt-4 text-red-200 text-center">{error}</p>}
+            </form>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes elegantBlink {
