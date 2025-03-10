@@ -3,6 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
+import godLogo from "/public/God.png";
 
 export default function Login() {
   const router = useRouter();
@@ -40,7 +42,7 @@ export default function Login() {
       }
       if (data.access_token) {
         localStorage.setItem("access_token", data.access_token);
-        router.push("/"); // Redirect to main chat page
+        router.push("/"); // Redirect to main chat UI
       } else {
         throw new Error("No access token received");
       }
@@ -50,44 +52,63 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen bg-black">
-      {/* Decorative Elements: Shooting Stars */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="shooting-star" style={{ top: "10%", left: "20%" }}></div>
-        <div className="shooting-star" style={{ top: "30%", left: "70%" }}></div>
-        <div className="shooting-star" style={{ top: "60%", left: "40%" }}></div>
-        {/* Add additional shooting star divs as needed */}
+    <div className="flex flex-col items-center min-h-screen p-4 bg-gradient-to-b from-[#0A0F2B] to-black text-white relative overflow-hidden">
+      {/* Background Decorations */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {/* Example static stars */}
+        <div className="star" style={{ fontSize: "6px" }}>•</div>
+        <div className="star" style={{ fontSize: "4px" }}>•</div>
+        {/* Example shooting stars */}
+        <div className="shooting-star" style={{ animationName: "shooting-star" }}></div>
+        <div className="shooting-star" style={{ animationName: "shooting-star" }}></div>
+        {/* Add more decorative elements as needed */}
       </div>
-      {/* Blurry Background Overlay */}
-      <div className="flex items-center justify-center min-h-screen bg-black bg-opacity-75">
-        <div className="relative bg-blue-600 p-6 rounded-lg shadow-lg max-w-md w-full animate-pulse-led-border">
-          <h3 className="text-xl font-bold text-white mb-4 text-center">Login</h3>
-          <form onSubmit={handleLogin} className="flex flex-col space-y-4">
-            <input
-              type="email"
-              value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
-              placeholder="Email"
-              required
-              className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              placeholder="Password"
-              required
-              className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              className="p-2 bg-blue-800 rounded text-white hover:bg-blue-900 transition"
-            >
-              Login
-            </button>
-          </form>
-          {error && <p className="mt-4 text-red-200 text-center">{error}</p>}
-        </div>
+
+      {/* Header: God Logo and Title */}
+      <div className="relative mb-2 z-10 flex items-center">
+        <div className="cloud cloud-left"></div>
+        <Image
+          src={godLogo}
+          alt="God Logo"
+          width={140}
+          height={140}
+          className="animate-god-pulse animate-breathe"
+          priority
+        />
+        <div className="cloud cloud-right"></div>
+      </div>
+      <div className="overflow-hidden w-full flex justify-center items-center mb-4 h-16 z-10">
+        <h1 className="text-3xl font-bold">God: Available</h1>
+      </div>
+
+      {/* Login Form – Replaces Chat UI */}
+      <div className="z-10 w-full max-w-md bg-blue-600 p-6 rounded-lg shadow-lg">
+        <h2 className="text-xl font-bold text-white mb-4 text-center">Login</h2>
+        <form onSubmit={handleLogin} className="flex flex-col space-y-4">
+          <input
+            type="email"
+            value={loginEmail}
+            onChange={(e) => setLoginEmail(e.target.value)}
+            placeholder="Email"
+            required
+            className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="password"
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+            placeholder="Password"
+            required
+            className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="p-2 bg-blue-800 rounded text-white hover:bg-blue-900 transition"
+          >
+            Login
+          </button>
+        </form>
+        {error && <p className="mt-4 text-red-200 text-center">{error}</p>}
       </div>
     </div>
   );
