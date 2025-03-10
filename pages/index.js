@@ -34,7 +34,6 @@ export default function Page() {
   const [highlightedQuestions, setHighlightedQuestions] = useState(new Set());
   const loginSound = useRef(null);
   const messageSound = useRef(null);
-  const hasMounted = useRef(false);
   const recognitionRef = useRef(null);
 
   // On mount: load token and chat date.
@@ -51,14 +50,19 @@ export default function Page() {
     console.log("Initial mount complete.");
   }, [router]);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!token) {
+      router.push("/login");
+    }
+  }, [token, router]);
+
   // After token is set, if just logged in, generate welcome message.
   useEffect(() => {
     if (token && localStorage.getItem("justLoggedIn")) {
       setAuthConfirmation("✅ You have logged on");
       localStorage.removeItem("justLoggedIn");
       sendWelcomeMessage();
-    } else if (!token) {
-      setMessages([]);
     }
   }, [token]);
 
@@ -75,6 +79,7 @@ export default function Page() {
     scrollToBottom();
   }, [messages, loading, scrollToBottom]);
 
+  // Cycle through spiritual quotes
   useEffect(() => {
     if (!mounted) return;
     const spiritualQuotes = [
@@ -182,8 +187,8 @@ export default function Page() {
               if (jsonData.text) {
                 welcomeResponse += jsonData.text;
                 updateBotMessage(welcomeResponse, true, welcomeSources, false, false, null);
-                // Increase delay for a slower streaming effect (150ms)
-                await new Promise((resolve) => setTimeout(resolve, 150));
+                // Slow down streaming effect (300ms delay)
+                await new Promise((resolve) => setTimeout(resolve, 300));
               } else if (jsonData.done) {
                 updateBotMessage(welcomeResponse, false, welcomeSources, false, false, null);
                 break;
@@ -207,13 +212,13 @@ export default function Page() {
     }
   };
 
-  // (Placeholder functions for sendMessage and startPrayer. Insert your existing implementations.)
+  // Placeholder functions for sendMessage and startPrayer – insert your existing implementations.
   const sendMessage = async () => {
-    // ... your existing sendMessage logic, with delay increased to 150ms if desired ...
+    // ... existing sendMessage logic with adjusted delay if needed ...
   };
 
   const startPrayer = async () => {
-    // ... your existing startPrayer logic, with delay increased to 150ms if desired ...
+    // ... existing startPrayer logic with adjusted delay if needed ...
   };
 
   const handleLogout = () => {
@@ -221,7 +226,13 @@ export default function Page() {
     setToken("");
     document.title = "God Chatbot";
     setMessages([
-      { text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] }
+      {
+        text: "You have been logged out.",
+        sender: "bot",
+        hasCursor: false,
+        audioUrl: null,
+        sources: [],
+      },
     ]);
     setAuthConfirmation("✅ You have logged out");
     router.push("/login");
@@ -286,7 +297,7 @@ export default function Page() {
       <div className="w-full max-w-lg relative z-10 flex flex-col items-center">
         <div
           ref={chatContainerRef}
-          className="p-4 rounded-lg shadow-md overflow-y-auto h-72 scrollbar-glass animate-color-pulse-border w-full bg-black text-white relative"
+          className="p-4 rounded-lg shadow-md overflow-y-scroll h-72 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 w-full bg-black text-white relative"
         >
           {messages.map((msg, index) => (
             <div
@@ -306,7 +317,7 @@ export default function Page() {
                 <div className="relative">
                   <div className={`p-2 rounded-2xl glass-effect ${msg.isWelcome ? "text-center bg-opacity-80 bg-gray-800 text-white text-lg" : ""}`} style={{ maxWidth: "100%" }}>
                     <p
-                      className={`font-sans text-sm break-words ${msg.sender === "user" ? "text-yellow-400" : ""}`}
+                      className="font-sans text-sm break-words"
                       dangerouslySetInnerHTML={{
                         __html: msg.hasCursor
                           ? `${msg.text}<span class="inline-block text-white text-xl ml-1 animate-slowBreathe align-middle">●</span>`
@@ -339,20 +350,6 @@ export default function Page() {
         </div>
 
         <div className="w-full h-px my-6 bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 z-10"></div>
-
-        <div className="w-full max-w-lg h-6 overflow-hidden mb-2">
-          <p
-            onClick={() => {
-              if (!loading && currentQuestion) {
-                setInput(currentQuestion);
-                if (inputRef.current) inputRef.current.focus();
-              }
-            }}
-            className={`text-gray-300 text-base font-serif animate-streaming-question text-center ${!loading ? "cursor-pointer hover:text-yellow-400" : "cursor-not-allowed"}`}
-          >
-            {currentQuestion}
-          </p>
-        </div>
 
         <div className="flex gap-2 w-full text-white">
           <input
