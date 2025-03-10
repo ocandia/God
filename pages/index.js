@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 
 export default function Home() {
   const router = useRouter();
-  
+
   // State variables
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -19,11 +19,10 @@ export default function Home() {
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Check authentication on mount
+  // On mount, check authentication
   useEffect(() => {
     const storedToken = localStorage.getItem("access_token");
     if (!storedToken) {
-      // If no token, redirect to login page
       router.push("/login");
     } else {
       setToken(storedToken);
@@ -54,18 +53,18 @@ export default function Home() {
     });
   };
 
-  // Scroll to the bottom of messages
+  // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // sendMessage and startPrayer functions (keep your existing implementations)
+  // Your existing sendMessage and startPrayer implementations...
   const sendMessage = async () => {
-    // ...existing sendMessage code...
+    // ...existing code...
   };
 
   const startPrayer = async () => {
-    // ...existing startPrayer code...
+    // ...existing code...
   };
 
   return (
@@ -73,7 +72,7 @@ export default function Home() {
       {/* Header with Logo and Title */}
       <header className="mb-4 flex flex-col items-center">
         <img
-          src="/logo.png" // Ensure logo.png exists in the public folder
+          src="/logo.png" // Ensure logo.png exists in public folder
           alt="Logo"
           className="w-32 h-32"
         />
