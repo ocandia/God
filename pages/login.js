@@ -55,16 +55,15 @@ export default function Login() {
     <div className="flex flex-col items-center min-h-screen p-4 bg-gradient-to-b from-[#0A0F2B] to-black text-white relative overflow-hidden">
       {/* Background Decorations */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Example static stars */}
-        <div className="star" style={{ fontSize: "6px" }}>•</div>
-        <div className="star" style={{ fontSize: "4px" }}>•</div>
-        {/* Example shooting stars */}
-        <div className="shooting-star" style={{ animationName: "shooting-star" }}></div>
-        <div className="shooting-star" style={{ animationName: "shooting-star" }}></div>
-        {/* Add more decorative elements as needed */}
+        {/* Static Stars */}
+        <div className="star" style={{ top: "10%", left: "15%", fontSize: "6px" }}>•</div>
+        <div className="star" style={{ top: "20%", left: "80%", fontSize: "4px" }}>•</div>
+        {/* Shooting Stars */}
+        <div className="shooting-star" style={{ top: "30%", left: "40%" }}></div>
+        <div className="shooting-star" style={{ top: "50%", left: "60%" }}></div>
       </div>
 
-      {/* Header: God Logo and Title */}
+      {/* Header: Logo and Title */}
       <div className="relative mb-2 z-10 flex items-center">
         <div className="cloud cloud-left"></div>
         <Image
@@ -81,8 +80,8 @@ export default function Login() {
         <h1 className="text-3xl font-bold">God: Available</h1>
       </div>
 
-      {/* Login Form – Replaces Chat UI */}
-      <div className="z-10 w-full max-w-md bg-blue-600 p-6 rounded-lg shadow-lg">
+      {/* Login Modal */}
+      <div className="z-10 w-full max-w-md bg-blue-600 p-6 rounded-lg shadow-lg animate-pulse-led-border">
         <h2 className="text-xl font-bold text-white mb-4 text-center">Login</h2>
         <form onSubmit={handleLogin} className="flex flex-col space-y-4">
           <input
