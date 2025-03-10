@@ -1,36 +1,34 @@
-// Force redeploy with backend URL fallback - March 08, 2025
-"use client"; // Required for client-side logic in Next.js
+// pages/index.js
+"use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
 
 export default function Home() {
+  const router = useRouter();
+  
   // State variables
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [token, setToken] = useState("");
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
   const [authConfirmation, setAuthConfirmation] = useState("");
 
   // Refs
-  const loginSound = useRef(null);
-  const messageSound = useRef(null);
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Simulated controversial questions
-  const controversialQuestions = [
-    "If God is all-powerful, why does evil exist?",
-    "Does God predetermine our fates, or do we have free will?",
-    // Add more as needed...
-  ];
-
-  // Placeholder for audio generation (replace with actual implementation if available)
-  const generateAudio = async (text) => {
-    return null;
-  };
+  // Check authentication on mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem("access_token");
+    if (!storedToken) {
+      // If no token, redirect to login page
+      router.push("/login");
+    } else {
+      setToken(storedToken);
+    }
+  }, [router]);
 
   // Helper to determine backend URL correctly
   const getBackendUrl = () => {
@@ -61,117 +59,15 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Handle login and fetch chat history
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const credentials = { email: loginEmail, password: loginPassword };
-      console.log("Sending login request with:", credentials);
-      const backendUrl = getBackendUrl();
-      console.log("Using backend URL:", backendUrl);
-      const res = await fetch(`${backendUrl}/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
-
-      // Get raw response text for debugging
-      const rawResponse = await res.text();
-      console.log("Raw response text:", rawResponse);
-
-      let data = {};
-      if (rawResponse) {
-        try {
-          data = JSON.parse(rawResponse);
-        } catch (parseError) {
-          console.error("Error parsing JSON:", parseError);
-          throw new Error("Invalid JSON response from server");
-        }
-      } else {
-        console.error("Empty response from server");
-        throw new Error("Empty response from server");
-      }
-
-      console.log("Login response:", data);
-      if (!res.ok) {
-        throw new Error(data.detail || "Login failed");
-      }
-      if (data.access_token) {
-        console.log("Setting token:", data.access_token);
-        localStorage.setItem("access_token", data.access_token);
-        setToken(data.access_token);
-        document.title = "God: Online";
-        setError("");
-        setAuthConfirmation("✅ You have logged on");
-        setLoginEmail("");
-        setLoginPassword("");
-        // Optionally, fetch chat history here
-      } else {
-        console.error("No access_token in response:", data);
-        setError("⚠️ Login failed: No access token received");
-      }
-    } catch (err) {
-      console.error("Login Error:", err);
-      setError("⚠️ Login failed: " + err.message);
-    }
-  };
-
-  // sendMessage and startPrayer remain unchanged (omitted for brevity)
+  // sendMessage and startPrayer functions (keep your existing implementations)
   const sendMessage = async () => {
-    // ...existing sendMessage implementation...
+    // ...existing sendMessage code...
   };
 
   const startPrayer = async () => {
-    // ...existing startPrayer implementation...
+    // ...existing startPrayer code...
   };
 
-  // Render login modal overlay independently if not logged in.
-  if (!token) {
-    return (
-      <div className="relative min-h-screen bg-black">
-        {/* Shooting stars overlay */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="shooting-star" style={{ top: "10%", left: "20%" }}></div>
-          <div className="shooting-star" style={{ top: "30%", left: "70%" }}></div>
-          <div className="shooting-star" style={{ top: "60%", left: "40%" }}></div>
-          {/* Add more shooting stars as needed */}
-        </div>
-        {/* Login Modal Overlay */}
-        <div className="flex items-center justify-center min-h-screen bg-black bg-opacity-75">
-          <div className="relative bg-blue-600 p-6 rounded-lg shadow-lg max-w-md w-full animate-pulse-led-border">
-            <h3 className="text-xl font-bold text-white mb-4 text-center">Login</h3>
-            <form onSubmit={handleLogin} className="flex flex-col space-y-4">
-              <input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="Email"
-                required
-                className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="Password"
-                required
-                className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="p-2 bg-blue-800 rounded text-white hover:bg-blue-900 transition"
-              >
-                Login
-              </button>
-            </form>
-            {error && <p className="mt-4 text-red-200 text-center">{error}</p>}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Render full chat UI when logged in.
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0F2B] to-black text-white">
       {/* Header with Logo and Title */}
@@ -243,6 +139,7 @@ export default function Home() {
               setMessages([]);
               setAuthConfirmation("");
               document.title = "God Chatbot";
+              router.push("/login");
             }}
             className="p-2 bg-red-600 rounded hover:bg-red-700"
           >
