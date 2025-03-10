@@ -1,4 +1,3 @@
-// pages/index.js
 "use client";
 
 import Image from "next/image";
@@ -27,18 +26,19 @@ export default function Page() {
   const [playingAudio, setPlayingAudio] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState("");
 
+  // Refs
   const chatContainerRef = useRef(null);
   const inputRef = useRef(null);
   const chatEndRef = useRef(null);
   const audioRefs = useRef({});
   const [highlightedQuestions, setHighlightedQuestions] = useState(new Set());
-
   const loginSound = useRef(null);
   const messageSound = useRef(null);
   const hasMounted = useRef(false);
+  const recognitionRef = useRef(null);
 
+  // On mount, initialize and check token/flag
   useEffect(() => {
-    // On mount, check for token and "justLoggedIn" flag
     const storedToken = localStorage.getItem("access_token");
     if (storedToken) {
       setToken(storedToken);
@@ -48,27 +48,20 @@ export default function Page() {
     }
     setChatDate(new Date().toLocaleString());
 
-    // If the user just logged in, display confirmation instead of default welcome message
+    // Check if user has just logged in – if so, generate welcome message
     if (localStorage.getItem("justLoggedIn")) {
       setAuthConfirmation("✅ You have logged on");
       localStorage.removeItem("justLoggedIn");
-      setMessages([]);
+      sendWelcomeMessage(); // Generate and display welcome message from chatbot
     } else {
-      setMessages([
-        {
-          text: `Welcome, seeker of divine wisdom. Ask me anything, and I shall respond with truth from sacred texts.<br/><span class="text-3xl">God</span> <span class="text-red-500 text-sm animate-elegant-blink">online</span>`,
-          sender: "bot",
-          hasCursor: false,
-          audioUrl: null,
-          isWelcome: true,
-        },
-      ]);
+      // Otherwise, set a default (or empty) state
+      setMessages([]);
     }
-
     setMounted(true);
-    console.log("Setting initial tab title and message");
+    console.log("Initial mount complete.");
   }, [router]);
 
+  // Function to scroll chat to bottom
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({
@@ -82,6 +75,7 @@ export default function Page() {
     scrollToBottom();
   }, [messages, loading, scrollToBottom]);
 
+  // Cycle through spiritual quotes
   useEffect(() => {
     if (!mounted) return;
     const spiritualQuotes = [
@@ -124,31 +118,112 @@ export default function Page() {
       : rawEnv;
   };
 
-  // (The functions generateAudio, toggleAudio, toggleRecording, sendMessage, and startPrayer
-  // should be inserted here from your stable code as needed. For brevity, they are omitted.)
+  // Function to update the bot message in the UI (as you had)
+  const updateBotMessage = useCallback(
+    (newResponse, isStreaming, sources = [], isPrayer = false, finalCursor = false, audioUrl = null) => {
+      setMessages((prev) => {
+        const updated = prev.map((msg) => ({ ...msg, hasCursor: false }));
+        const lastIndex = updated.length - 1;
+        if (lastIndex >= 0 && updated[lastIndex].sender === "bot") {
+          // (You can add any formatting logic here as needed)
+          updated[lastIndex].text = newResponse.trim();
+          updated[lastIndex].hasCursor = isStreaming || finalCursor;
+          updated[lastIndex].sources = sources;
+          updated[lastIndex].isPrayer = isPrayer;
+          updated[lastIndex].audioUrl = audioUrl || updated[lastIndex].audioUrl;
+          console.log("Updated message:", updated[lastIndex]);
+          scrollToBottom();
+        }
+        return updated;
+      });
+    },
+    [scrollToBottom]
+  );
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    setToken("");
-    document.title = "God Chatbot";
-    setMessages([
-      {
-        text: "You have been logged out.",
-        sender: "bot",
-        hasCursor: false,
-        audioUrl: null,
-        sources: [],
-      },
-    ]);
-    setAuthConfirmation("✅ You have logged out");
-    router.push("/login");
+  // Function to generate a welcome message from the chatbot after login
+  const sendWelcomeMessage = async () => {
+    const welcomePrompt = "Greet me warmly with wisdom from sacred texts.";
+    setLoading(true);
+    setError("");
+    const backendUrl = getBackendUrl();
+    try {
+      const response = await fetch(`${backendUrl}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: welcomePrompt }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Welcome request failed: ${response.status} - ${errorText}`);
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let welcomeResponse = "";
+      let welcomeSources = [];
+      // Initialize with a "typing..." message from the bot
+      setMessages([{ text: "Typing...", sender: "bot", hasCursor: true, audioUrl: null, sources: [] }]);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          updateBotMessage(welcomeResponse, false, welcomeSources, false, false, null);
+          break;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const jsonData = JSON.parse(line.replace("data: ", "").trim());
+              if (jsonData.text) {
+                welcomeResponse += jsonData.text;
+                updateBotMessage(welcomeResponse, true, welcomeSources, false, false, null);
+              } else if (jsonData.done) {
+                updateBotMessage(welcomeResponse, false, welcomeSources, false, false, null);
+                break;
+              } else if (jsonData.error) {
+                setError(`⚠️ ${jsonData.error}`);
+                break;
+              }
+            } catch (err) {
+              console.error("JSON Parse Error in welcome message:", err);
+              setError("⚠️ Error parsing welcome message data");
+              break;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Welcome message Error:", err);
+      setError("⚠️ Failed to generate welcome message: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // (Placeholder functions for sendMessage and startPrayer – use your existing implementations)
+  const sendMessage = async () => {
+    // ...existing sendMessage logic...
+  };
+
+  const startPrayer = async () => {
+    // ...existing startPrayer logic...
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") sendMessage();
   };
 
-  // (Assume sendMessage and startPrayer functions are defined here.)
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    setToken("");
+    document.title = "God Chatbot";
+    setMessages([{ text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] }]);
+    setAuthConfirmation("✅ You have logged out");
+    router.push("/login");
+  };
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gradient-to-b from-[#0A0F2B] to-black text-white relative overflow-hidden">
@@ -160,7 +235,7 @@ export default function Page() {
         <div className="shooting-star" style={{ animationName: "shooting-star" }}></div>
       </div>
 
-      {/* Header with Logo, Clouds, and Title */}
+      {/* Header with Logo, Clouds, and Quote */}
       <div className="relative mb-2 z-10 flex items-center">
         <div className="cloud cloud-left"></div>
         <Image
@@ -247,12 +322,9 @@ export default function Page() {
                   )}
                 </div>
                 {msg.sender === "bot" && msg.sources && msg.sources.length > 0 && !msg.isWelcome && (
-                  <p
-                    className="text-[10px] text-gray-400 mt-1"
-                    dangerouslySetInnerHTML={{
-                      __html: `<span class="text-yellow-500">Sources (${msg.sources.length}):</span> ${msg.sources.join(' <span class="text-yellow-500">\\</span> ')}`,
-                    }}
-                  />
+                  <p className="text-[10px] text-gray-400 mt-1" dangerouslySetInnerHTML={{
+                    __html: `<span class="text-yellow-500">Sources (${msg.sources.length}):</span> ${msg.sources.join(' <span class="text-yellow-500">\\</span> ')}`,
+                  }} />
                 )}
               </div>
             </div>
