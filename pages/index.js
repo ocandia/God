@@ -37,7 +37,7 @@ export default function Page() {
   const hasMounted = useRef(false);
   const recognitionRef = useRef(null);
 
-  // On mount, initialize and check token/flag
+  // On mount, check for token and "justLoggedIn" flag
   useEffect(() => {
     const storedToken = localStorage.getItem("access_token");
     if (storedToken) {
@@ -48,20 +48,19 @@ export default function Page() {
     }
     setChatDate(new Date().toLocaleString());
 
-    // Check if user has just logged in – if so, generate welcome message
+    // Check if user just logged in and remove the flag afterward.
     if (localStorage.getItem("justLoggedIn")) {
       setAuthConfirmation("✅ You have logged on");
       localStorage.removeItem("justLoggedIn");
-      sendWelcomeMessage(); // Generate and display welcome message from chatbot
+      sendWelcomeMessage(); // Generate welcome message from chatbot
     } else {
-      // Otherwise, set a default (or empty) state
+      // Otherwise, set a default welcome message (or empty)
       setMessages([]);
     }
     setMounted(true);
     console.log("Initial mount complete.");
   }, [router]);
 
-  // Function to scroll chat to bottom
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({
@@ -75,7 +74,6 @@ export default function Page() {
     scrollToBottom();
   }, [messages, loading, scrollToBottom]);
 
-  // Cycle through spiritual quotes
   useEffect(() => {
     if (!mounted) return;
     const spiritualQuotes = [
@@ -118,14 +116,13 @@ export default function Page() {
       : rawEnv;
   };
 
-  // Function to update the bot message in the UI (as you had)
+  // Function to update the bot message in the UI
   const updateBotMessage = useCallback(
     (newResponse, isStreaming, sources = [], isPrayer = false, finalCursor = false, audioUrl = null) => {
       setMessages((prev) => {
         const updated = prev.map((msg) => ({ ...msg, hasCursor: false }));
         const lastIndex = updated.length - 1;
         if (lastIndex >= 0 && updated[lastIndex].sender === "bot") {
-          // (You can add any formatting logic here as needed)
           updated[lastIndex].text = newResponse.trim();
           updated[lastIndex].hasCursor = isStreaming || finalCursor;
           updated[lastIndex].sources = sources;
@@ -142,6 +139,13 @@ export default function Page() {
 
   // Function to generate a welcome message from the chatbot after login
   const sendWelcomeMessage = async () => {
+    // Before proceeding, ensure that the token is valid
+    if (!token || token.split('.').length !== 3) {
+      console.error("Invalid token for welcome message:", token);
+      setError("Invalid token for generating welcome message.");
+      return;
+    }
+
     const welcomePrompt = "Greet me warmly with wisdom from sacred texts.";
     setLoading(true);
     setError("");
@@ -163,7 +167,7 @@ export default function Page() {
       const decoder = new TextDecoder();
       let welcomeResponse = "";
       let welcomeSources = [];
-      // Initialize with a "typing..." message from the bot
+      // Set an initial "typing" message
       setMessages([{ text: "Typing...", sender: "bot", hasCursor: true, audioUrl: null, sources: [] }]);
       while (true) {
         const { value, done } = await reader.read();
@@ -203,26 +207,28 @@ export default function Page() {
     }
   };
 
-  // (Placeholder functions for sendMessage and startPrayer – use your existing implementations)
+  // (Placeholder functions for sendMessage and startPrayer – use your existing implementations.)
   const sendMessage = async () => {
-    // ...existing sendMessage logic...
+    // ... your existing sendMessage code ...
   };
 
   const startPrayer = async () => {
-    // ...existing startPrayer logic...
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") sendMessage();
+    // ... your existing startPrayer code ...
   };
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     setToken("");
     document.title = "God Chatbot";
-    setMessages([{ text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] }]);
+    setMessages([
+      { text: "You have been logged out.", sender: "bot", hasCursor: false, audioUrl: null, sources: [] }
+    ]);
     setAuthConfirmation("✅ You have logged out");
     router.push("/login");
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") sendMessage();
   };
 
   return (
