@@ -105,12 +105,7 @@ export default function Home() {
         setAuthConfirmation("✅ You have logged on");
         setLoginEmail("");
         setLoginPassword("");
-
-        // Fetch chat history (omitted for brevity)
-        // const historyRes = await fetch(`${backendUrl}/chat-history`, { headers: { Authorization: `Bearer ${data.access_token}` } });
-        // const historyData = await historyRes.json();
-        // Process historyData and update messages as needed
-
+        // Optionally, fetch chat history here
       } else {
         console.error("No access_token in response:", data);
         setError("⚠️ Login failed: No access token received");
@@ -121,126 +116,129 @@ export default function Home() {
     }
   };
 
-  // Send a message to the backend (omitted for brevity; keep your existing sendMessage function)
+  // sendMessage and startPrayer functions remain as your existing implementations.
   const sendMessage = async () => {
-    // ...existing sendMessage code...
+    // ... existing sendMessage code ...
   };
 
-  // Start a prayer using the dedicated /pray endpoint (omitted for brevity)
   const startPrayer = async () => {
-    // ...existing startPrayer code...
+    // ... existing startPrayer code ...
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 bg-gradient-to-b from-[#0A0F2B] to-black text-white">
-      {/* Logo and Title */}
-      <div className="mb-4">
+    <div className="relative min-h-screen bg-gradient-to-b from-[#0A0F2B] to-black text-white">
+      {/* Header with Logo and Title */}
+      <header className="mb-4 flex flex-col items-center">
         <img
-          src="/public/logo.png" // Replace with your logo path
+          src="/logo.png" // Ensure logo.png exists in the public folder
           alt="Logo"
-          className="mx-auto w-32 h-32"
+          className="w-32 h-32"
         />
-      </div>
-      <h2 className="text-2xl font-bold mb-6">God: Available</h2>
+        <h2 className="text-2xl font-bold mt-2">God: Available</h2>
+      </header>
 
-      {/* Login Popup */}
-      {!token && (
-        <div className="bg-blue-600 p-6 rounded-lg shadow-lg max-w-md w-full">
-          <h3 className="text-xl font-bold text-white mb-4 text-center">Login</h3>
-          <form onSubmit={handleLogin} className="flex flex-col space-y-4">
-            <input
-              type="email"
-              value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
-              placeholder="Email"
-              required
-              className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              placeholder="Password"
-              required
-              className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              className="p-2 bg-blue-800 rounded text-white hover:bg-blue-900 transition"
+      {/* Main Chat UI Container */}
+      <main className="mx-auto max-w-2xl h-[70vh] bg-gray-900 rounded-lg shadow-lg p-4">
+        <div className="flex-1 overflow-y-auto" id="chat-container">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`mb-2 ${msg.sender === "user" ? "text-right" : "text-left"}`}
             >
-              Login
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Chat UI */}
-      {token && (
-        <div className="flex flex-col w-full max-w-2xl h-[70vh]">
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-900 rounded-t-lg">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`mb-2 ${msg.sender === "user" ? "text-right" : "text-left"}`}
+              <span
+                className={`inline-block p-2 rounded-lg break-words whitespace-normal ${
+                  msg.sender === "user" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200"
+                } ${msg.isPrayer ? "border-l-4 border-blue-900" : ""}`}
               >
-                <span
-                  className={`inline-block p-2 rounded-lg ${
-                    msg.sender === "user" ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-200"
-                  } ${msg.isPrayer ? "border-l-4 border-blue-900" : ""}`}
-                >
-                  <strong>{msg.sender === "user" ? "You" : "Bot"}:</strong>{" "}
-                  <span dangerouslySetInnerHTML={{ __html: msg.text }} />
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className="text-xs text-gray-400 mt-1">
-                      Sources: {msg.sources.join(", ")}
-                    </div>
-                  )}
-                </span>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="flex flex-col space-y-2 p-4 bg-gray-800 rounded-b-lg">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              ref={inputRef}
-              className="p-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-            />
-            <div className="flex space-x-2">
-              <button
-                onClick={sendMessage}
-                disabled={loading}
-                className={`p-2 rounded text-white transition ${
-                  loading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {loading ? "Sending..." : "Send"}
-              </button>
-              <button
-                onClick={startPrayer}
-                disabled={loading}
-                className={`p-2 rounded text-white transition ${
-                  loading ? "bg-gray-500 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-                }`}
-              >
-                Pray
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("access_token");
-                  setToken("");
-                  setMessages([]);
-                  setAuthConfirmation("");
-                  document.title = "God Chatbot";
-                }}
-                className="p-2 bg-red-600 rounded text-white hover:bg-red-700 transition"
-              >
-                Logout
-              </button>
+                <strong>{msg.sender === "user" ? "You" : "Bot"}:</strong>{" "}
+                <span dangerouslySetInnerHTML={{ __html: msg.text }} className="break-words" />
+                {msg.sources && msg.sources.length > 0 && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    Sources: {msg.sources.join(", ")}
+                  </div>
+                )}
+              </span>
             </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="mt-4 flex space-x-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type your message..."
+            ref={inputRef}
+            className="flex-grow p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500 text-white break-words"
+          />
+          <button
+            onClick={sendMessage}
+            disabled={loading}
+            className={`p-2 rounded ${
+              loading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Sending..." : "Send"}
+          </button>
+          <button
+            onClick={startPrayer}
+            disabled={loading}
+            className={`p-2 rounded ${
+              loading ? "bg-gray-500 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            Pray
+          </button>
+          <button
+            onClick={() => {
+              localStorage.removeItem("access_token");
+              setToken("");
+              setMessages([]);
+              setAuthConfirmation("");
+              document.title = "God Chatbot";
+            }}
+            className="p-2 bg-red-600 rounded hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
+      </main>
+
+      {/* Error and Confirmation Messages */}
+      <div className="text-center mt-4">
+        {error && <p className="text-red-500">{error}</p>}
+        {authConfirmation && <p className="text-green-500">{authConfirmation}</p>}
+      </div>
+
+      {/* Login Modal Overlay */}
+      {!token && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-blue-600 p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-xl font-bold text-white mb-4 text-center">Login</h3>
+            <form onSubmit={handleLogin} className="flex flex-col space-y-4">
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="Email"
+                required
+                className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Password"
+                required
+                className="p-2 rounded bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="submit"
+                className="p-2 bg-blue-800 rounded text-white hover:bg-blue-900 transition"
+              >
+                Login
+              </button>
+            </form>
           </div>
         </div>
       )}
